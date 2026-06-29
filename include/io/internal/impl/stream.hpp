@@ -35,7 +35,7 @@ namespace Operator
                     "Operator::Impl<io::internal::impl::iostream>(args...): "
                     "ostream must be called with at least one value!");
 
-      ((out_stream << args), ...);
+      ((out_stream << std::forward<OStreamArgs>(args)), ...);
     }
   };
 

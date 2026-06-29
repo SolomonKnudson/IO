@@ -1,6 +1,5 @@
 #ifndef IO_SOCKET_HPP
 #define IO_SOCKET_HPP
-// #include <io/internal/impl/socket.hpp>
 #include <io/internal/internal.hpp>
 
 namespace io
@@ -9,7 +8,7 @@ namespace io
   {
     // decltype(auto)
     // read(const std::filepath& file_path) {
-    //   // return internal::write<internal::impl::File>(std::forward<Args>(args)...);
+    //   // return internal::read<internal::impl::File>(std::forward<Args>(args)...);
     // };
 
     // decltype(auto)
@@ -18,5 +17,4 @@ namespace io
     // };
   } // namespace socket
 }; // namespace io
-#endif // io_SOCKET_HPP
-
+#endif // IO_SOCKET_HPP
