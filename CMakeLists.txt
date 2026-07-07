@@ -14,7 +14,7 @@ target_include_directories(IO INTERFACE
 )
 
 target_compile_features(IO INTERFACE
-  cxx_std_20
+  cxx_std_17
 )
 
 include(FetchContent)
