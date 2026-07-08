@@ -1,19 +1,7 @@
 #include <io/io.hpp>
 
-#include <chrono>
+#include <STLConvenience/chrono.hpp>
 using namespace std::chrono_literals;
-
-enum class TimeComponent
-{
-  Hour,
-  Minute,
-
-  Second,
-  Milliseconds,
-
-  Microseconds,
-  Nanoseconds
-};
 
 struct PayRate
 {
@@ -21,149 +9,159 @@ struct PayRate
   double_t overtime_multiplier{1.5};
 };
 
-template <typename ReturnDuration, typename Duration>
-static decltype(auto)
-to_duration(const Duration& duration)
+struct Time
 {
-  return std::chrono::duration_cast<ReturnDuration>(duration);
-}
+  std::chrono::hours hours{};
+  std::chrono::minutes minutes{};
 
-template <typename Duration>
-static decltype(auto)
-to_hours(const Duration& duration)
+  std::chrono::seconds seconds{};
+  std::chrono::milliseconds milliseconds{};
+
+  std::chrono::microseconds microseconds{};
+  std::chrono::nanoseconds nanoseconds{};
+};
+
+enum class TimeDisplayPercision
 {
-  return to_duration<std::chrono::hours>(duration);
-}
+  minutes,
+  seconds,
+  milliseconds,
+  microseconds,
+  nanoseconds
+};
 
-template <typename Duration>
-static decltype(auto)
-to_minutes(const Duration& duration)
+class TimePoint
 {
-  return to_duration<std::chrono::minutes>(duration);
-}
-
-template <typename Duration>
-static decltype(auto)
-to_seconds(const Duration& duration)
-{
-  return to_duration<std::chrono::seconds>(duration);
-}
-
-template <typename Duration>
-static decltype(auto)
-to_milliseconds(const Duration& duration)
-{
-  return to_duration<std::chrono::milliseconds>(duration);
-}
-
-template <typename Duration>
-static decltype(auto)
-to_microseconds(const Duration& duration)
-{
-  return to_duration<std::chrono::microseconds>(duration);
-}
-
-template <typename Duration>
-static decltype(auto)
-to_nanoseconds(const Duration& duration)
-{
-  return to_duration<std::chrono::nanoseconds>(duration);
-}
-
-template <typename Duration>
-static decltype(auto)
-count(const Duration& duration, const TimeComponent time_component)
-{
-  int64_t ret{};
-  switch (time_component)
-  {
-    case TimeComponent::Hour:
-      ret = to_hours(duration).count();
-      break;
-
-    case TimeComponent::Minute:
-      ret = to_minutes(duration).count();
-      break;
-
-    case TimeComponent::Second:
-      ret = to_seconds(duration).count();
-      break;
-
-    case TimeComponent::Milliseconds:
-      ret = to_milliseconds(duration).count();
-      break;
-
-    case TimeComponent::Microseconds:
-      ret = to_nanoseconds(duration).count();
-      break;
-
-    case TimeComponent::Nanoseconds:
-      ret = to_minutes(duration).count();
-      break;
-  };
-  return ret;
-}
-
-struct TimePoint
-{
-  TimePoint(const std::chrono::seconds total_time = {})
-    : time_since_midnight{total_time}
+public:
+  TimePoint(const Time& time = {})
+    : m_time_since_midnight{STLC::chrono::to_nanoseconds(
+          time.hours + time.minutes + time.seconds + time.milliseconds +
+          time.microseconds + time.nanoseconds)}
   {
   }
 
-  TimePoint(const std::chrono::hours hours,
-            const std::chrono::minutes minutes = 0min)
-    : TimePoint{hours + minutes} {};
+  template <typename ReturnDuration>
+  ReturnDuration
+  to_duration() const
+  {
+    return STLC::chrono::to_duration<ReturnDuration>(m_time_since_midnight);
+  };
 
-  decltype(auto)
+  std::chrono::hours
   hours() const
   {
-    return to_hours(time_since_midnight);
+    return to_duration<std::chrono::hours>();
   };
 
-  decltype(auto)
+  std::chrono::minutes
   minutes() const
   {
-    return to_minutes(time_since_midnight - hours());
+    return STLC::chrono::to_minutes(m_time_since_midnight %
+                                    STLC::chrono::make_hours(1));
   }
 
-  decltype(auto)
-  count(const TimeComponent time_component) const
+  std::chrono::seconds
+  seconds() const
   {
-    switch (time_component)
-    {
-      case TimeComponent::Hour:
-        return ::count(hours(), TimeComponent::Hour);
+    return STLC::chrono::to_seconds(m_time_since_midnight %
+                                    STLC::chrono::make_minutes(1));
+  }
 
-      case TimeComponent::Minute:
-        return ::count(minutes(), TimeComponent::Minute);
+  std::chrono::milliseconds
+  milliseconds() const
+  {
+    return STLC::chrono::to_milliseconds(m_time_since_midnight %
+                                         STLC::chrono::make_seconds(1));
+  }
 
-      default:
-        throw std::invalid_argument{"TimePoint::Count(): Only hours and "
-                                    "minutes are currently supported"};
-    }
+  std::chrono::microseconds
+  microseconds() const
+  {
+    return STLC::chrono::to_microseconds(m_time_since_midnight %
+                                         STLC::chrono::make_milliseconds(1));
+  }
+
+  std::chrono::nanoseconds
+  nanoseconds() const
+  {
+    return STLC::chrono::to_nanoseconds(m_time_since_midnight %
+                                        STLC::chrono::make_microseconds(1));
   }
 
   std::string
-  to_string() const
+  to_string(const TimeDisplayPercision percision =
+                TimeDisplayPercision::minutes) const
   {
     std::string ret{};
-    ret.append(std::to_string(count(TimeComponent::Hour))).push_back(':');
+    ret.append(std::to_string(hours().count())).push_back(':');
 
-    auto min{count(TimeComponent::Minute)};
+    auto min{minutes().count()};
     if (min < 10)
     {
       ret.push_back('0');
     }
-
     ret.append(std::to_string(min));
+
+    if (percision != TimeDisplayPercision::minutes)
+    {
+      ret.push_back(':');
+      auto sec{seconds().count()};
+      if (sec < 10)
+      {
+        ret.append("0");
+      }
+      ret.append(std::to_string(sec)).push_back('.');
+
+      if (percision != TimeDisplayPercision::seconds)
+      {
+        auto millisec{milliseconds().count()};
+        if (millisec)
+        {
+          (millisec < 10 ? ret.append("00") : ret.append("0"));
+          ret.append(std::to_string(millisec));
+        }
+        else
+        {
+          ret.append("000");
+        }
+
+        if (percision != TimeDisplayPercision::milliseconds)
+        {
+          auto microsec{microseconds().count()};
+          if (microsec)
+          {
+            (microsec < 10 ? ret.append("00") : ret.append("0"));
+            ret.append(std::to_string(microsec));
+          }
+          else
+          {
+            ret.append("000");
+          }
+
+          if (percision != TimeDisplayPercision::microseconds)
+          {
+            auto nanosec{nanoseconds().count()};
+            if (nanosec)
+            {
+              (nanosec < 10 ? ret.append("00") : ret.append("0"));
+              ret.append(std::to_string(nanosec));
+            }
+            else
+            {
+              ret.append("000");
+            }
+            ret.append("ns");
+          }
+        }
+      }
+    }
     return ret;
   }
 
   bool
   operator<(const TimePoint& rhs) const
   {
-    return this->time_since_midnight < rhs.time_since_midnight;
+    return this->m_time_since_midnight < rhs.m_time_since_midnight;
   }
 
   bool
@@ -173,253 +171,240 @@ struct TimePoint
   }
 
   template <typename Duration>
-  decltype(auto)
+  void
   operator+=(const Duration& rhs)
   {
-    return this->time_since_midnight += rhs;
+    this->m_time_since_midnight += rhs;
   }
 
   template <typename Duration>
-  decltype(auto)
+  void
   operator-=(const Duration& rhs)
   {
-    return this->time_since_midnight -= rhs;
+    this->m_time_since_midnight -= rhs;
   }
 
-  decltype(auto)
+  std::chrono::nanoseconds
   operator+(const TimePoint& rhs) const
   {
-    return this->time_since_midnight + rhs.time_since_midnight;
+    return this->m_time_since_midnight + rhs.m_time_since_midnight;
   }
 
-  decltype(auto)
+  std::chrono::nanoseconds
   operator-(const TimePoint& rhs) const
   {
-    return this->time_since_midnight - rhs.time_since_midnight;
+    return this->m_time_since_midnight - rhs.m_time_since_midnight;
   }
 
-  std::chrono::seconds time_since_midnight{};
+private:
+  std::chrono::nanoseconds m_time_since_midnight{};
+};
+
+struct WorkShiftInfo
+{
+  std::string date{};
+  PayRate pay_rate{};
+
+  TimePoint clock_in{};
+  TimePoint clock_out{};
 };
 
 class WorkShift
 {
 public:
-  WorkShift(const std::string& date,
-            const PayRate pay_rate,
-            const TimePoint& clock_in,
-            const TimePoint& clock_out)
-    : m_shift_date{date}
-    , m_pay_rate{pay_rate}
-
-    , m_clock_in{clock_in}
-    , m_clock_out{clock_out}
-
+  WorkShift(const WorkShiftInfo& info = {})
+    : m_info{info}
     , m_total_time_worked{}
   {
-    normalize_time_entries();
+    calculate_time_worked();
   }
 
   WorkShift&
   set_clock_in_time(const TimePoint& clock_in)
   {
-    m_clock_in = clock_in;
-    normalize_time_entries();
+    m_info.clock_in = clock_in;
+    calculate_time_worked();
     return *this;
   }
 
   WorkShift&
   set_clock_out_time(const TimePoint& clock_out)
   {
-    m_clock_out = clock_out;
-    normalize_time_entries();
+    m_info.clock_out = clock_out;
+    calculate_time_worked();
     return *this;
   }
 
   WorkShift&
   set_shift_date(const std::string& shift_date)
   {
-    m_shift_date = shift_date;
+    m_info.date = shift_date;
     return *this;
   }
 
   const TimePoint&
   clock_in_time() const
   {
-    return m_clock_in;
+    return m_info.clock_in;
   }
   const TimePoint&
   clock_out_time() const
   {
-    return m_clock_out;
+    return m_info.clock_out;
   }
 
   const std::string&
   date() const
   {
-    return m_shift_date;
+    return m_info.date;
   }
 
-  decltype(auto)
+  template <typename ReturnDuration>
+  ReturnDuration
   total_time_worked() const
   {
-    return m_total_time_worked;
+    return STLC::chrono::to_duration<ReturnDuration>(m_total_time_worked);
   }
 
-  decltype(auto)
+  std::chrono::hours
   hours() const
   {
-    return to_hours(total_time_worked());
+    return total_time_worked<std::chrono::hours>();
   }
 
-  decltype(auto)
+  std::chrono::minutes
   minutes() const
   {
-    return to_minutes(total_time_worked() - hours());
+    return STLC::chrono::to_minutes(total_time_worked<std::chrono::seconds>() -
+                                    hours());
   }
 
   WorkShift&
   set_pay_rate(const PayRate& pay_rate)
   {
-    m_pay_rate = pay_rate;
+    m_info.pay_rate = pay_rate;
     return *this;
   }
+
   const PayRate&
   pay_rate() const
   {
-    return m_pay_rate;
-  }
-
-  decltype(auto)
-  count(const TimeComponent time_component) const
-  {
-    switch (time_component)
-    {
-      case TimeComponent::Hour:
-        return ::count(hours(), TimeComponent::Hour);
-
-      case TimeComponent::Minute:
-        return ::count(minutes(), TimeComponent::Minute);
-
-      default:
-        throw std::invalid_argument{"WorkShift::Count(): Only hours and "
-                                    "minutes are currently supported"};
-    }
+    return m_info.pay_rate;
   }
 
 private:
   void
-  normalize_time_entries()
-  {
-    if (m_clock_out < m_clock_in)
-    {
-      m_clock_out += 24h;
-    }
-    calculate_time_worked();
-  }
-
-  void
   calculate_time_worked()
   {
-    m_total_time_worked = m_clock_out - m_clock_in;
+    m_total_time_worked = m_info.clock_out - m_info.clock_in;
+    if (m_info.clock_out < m_info.clock_in)
+    {
+      m_total_time_worked += STLC::chrono::make_hours(24);
+    }
   }
 
-  std::string m_shift_date{};
-  PayRate m_pay_rate{};
-  TimePoint m_clock_in{};
-  TimePoint m_clock_out{};
-  std::chrono::seconds m_total_time_worked{};
+  WorkShiftInfo m_info{};
+  std::chrono::nanoseconds m_total_time_worked{};
 };
 
 static void
 display_hours_worked(const WorkShift& shift)
 {
+  auto hours{shift.hours().count()};
   io::stream::cout(shift.date(),
                    ":\nClock-in: ",
                    shift.clock_in_time().to_string(),
-                   '\n',
-                   "Clock-out: ",
+                   "\nClock-out : ",
                    shift.clock_out_time().to_string(),
-                   '\n',
-                   "Hours worked: ",
-                   shift.count(TimeComponent::Hour),
+                   "\nHours worked : ",
+                   hours,
                    "h");
 
+  auto minutes{shift.minutes().count()};
+  auto time_worked_decimal{hours + (minutes / 60.0)};
+
   //Do not display '0min'
-  if (shift.count(TimeComponent::Minute) > 0)
+  if (minutes > 0)
   {
-    io::stream::cout(" and ", shift.count(TimeComponent::Minute), "min");
+    io::stream::cout(" and ", minutes, "min");
   }
 
-  if ((shift.count(TimeComponent::Minute) / 60.0) > 0)
+  if ((minutes / 60.0) > 0)
   {
-    io::stream::cout(" or ",
-                     shift.count(TimeComponent::Hour) +
-                         (shift.count(TimeComponent::Minute) / 60.0),
-                     " hours");
+    io::stream::cout(" or ", time_worked_decimal, " hours");
   }
-  io::stream::cout("\nTotal pay: $",
-                   shift.pay_rate().payrate *
-                       (shift.count(TimeComponent::Hour) +
-                        (shift.count(TimeComponent::Minute) / 60.0)));
-  io::stream::cout("\n\n");
+
+  io::stream::cout("\nPay rate: $",
+                   shift.pay_rate().payrate,
+                   "\nTotal pay: $",
+                   shift.pay_rate().payrate * time_worked_decimal,
+                   "\n\n");
 }
 
 int
 main(int argc, char* argv[])
 {
+  io::stream::cout("TimePoint test: ",
+                   TimePoint{Time{15h, 22min, 55s, 15ms, 5us, 20ns}}.to_string(
+                       TimeDisplayPercision::nanoseconds),
+                   "\n\n");
+
+  display_hours_worked(
+      {{"Overnight test", {19.0}, Time{15h}, Time{3h, 30min}}});
   std::chrono::seconds total_time_worked{};
-  WorkShift shift{"06/28/26", {19.0}, {9h}, {18h, 45min}};
+  WorkShift shift{{"06/28/26", {19.0}, Time{9h}, Time{18h, 45min}}};
 
   display_hours_worked(shift);
-  total_time_worked += shift.total_time_worked();
+  total_time_worked += shift.total_time_worked<std::chrono::seconds>();
 
-  shift.set_clock_in_time({9h});
-  shift.set_clock_out_time({18h, 30min});
+  shift.set_clock_in_time(Time{9h});
+  shift.set_clock_out_time(Time{18h, 30min});
 
   shift.set_shift_date("06/29/26");
   display_hours_worked(shift);
-  total_time_worked += shift.total_time_worked();
+  total_time_worked += shift.total_time_worked<std::chrono::seconds>();
 
-  shift.set_clock_in_time({12h});
-  shift.set_clock_out_time({17h});
+  shift.set_clock_in_time(Time{12h});
+  shift.set_clock_out_time(Time{17h});
 
   shift.set_shift_date("06/30/26");
   display_hours_worked(shift);
-  total_time_worked += shift.total_time_worked();
+  total_time_worked += shift.total_time_worked<std::chrono::seconds>();
 
-  shift.set_clock_in_time({9h, 45min});
-  shift.set_clock_out_time({18h});
+  shift.set_clock_in_time(Time{9h, 45min});
+  shift.set_clock_out_time(Time{18h});
 
   shift.set_shift_date("07/01/26");
   display_hours_worked(shift);
-  total_time_worked += shift.total_time_worked();
+  total_time_worked += shift.total_time_worked<std::chrono::seconds>();
 
-  shift.set_clock_in_time({10h, 15min});
-  shift.set_clock_out_time({19h, 45min});
+  shift.set_clock_in_time(Time{10h, 15min});
+  shift.set_clock_out_time(Time{19h, 45min});
 
   shift.set_shift_date("07/03/26");
   display_hours_worked(shift);
-  total_time_worked += shift.total_time_worked();
+  total_time_worked += shift.total_time_worked<std::chrono::seconds>();
 
-  shift.set_clock_in_time({9h});
-  shift.set_clock_out_time({14h, 30min});
+  shift.set_clock_in_time(Time{9h});
+  shift.set_clock_out_time(Time{14h, 30min});
 
   shift.set_shift_date("07/04/26");
   display_hours_worked(shift);
-  total_time_worked += shift.total_time_worked();
+  total_time_worked += shift.total_time_worked<std::chrono::seconds>();
 
-  shift.set_clock_in_time({9h});
-  shift.set_clock_out_time({15h});
+  shift.set_clock_in_time(Time{9h});
+  shift.set_clock_out_time(Time{15h});
 
   shift.set_shift_date("07/05/26");
   display_hours_worked(shift);
 
-  total_time_worked += shift.total_time_worked();
-  auto total_hours{count(total_time_worked, TimeComponent::Hour)};
+  total_time_worked += shift.total_time_worked<std::chrono::seconds>();
+  auto total_hours{STLC::chrono::to_hours(total_time_worked).count()};
 
   auto total_minutes{
-      count((total_time_worked - std::chrono::hours(total_hours)),
-            TimeComponent::Minute)};
+      STLC::chrono::to_minutes(
+          (total_time_worked - STLC::chrono::make_hours(total_hours)))
+          .count()};
 
   if ((total_hours > 0) || (total_minutes > 0))
   {
