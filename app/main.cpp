@@ -9,8 +9,35 @@ struct PayRate
   double_t overtime_multiplier{1.5};
 };
 
-struct Time
+struct Day
 {
+  static constexpr std::chrono::hours hours{STLC::chrono::make_hours(24)};
+
+  static constexpr std::chrono::minutes minutes{
+      STLC::chrono::to_minutes(hours)};
+
+  static constexpr std::chrono::seconds seconds{
+      STLC::chrono::to_seconds(minutes)};
+
+  static constexpr std::chrono::milliseconds milliseconds{
+      STLC::chrono::to_milliseconds(seconds)};
+
+  static constexpr std::chrono::microseconds microseconds{
+      STLC::chrono::to_microseconds(milliseconds)};
+
+  static constexpr std::chrono::nanoseconds nanoseconds{
+      STLC::chrono::to_nanoseconds(microseconds)};
+};
+
+struct TimeComponent
+{
+  std::chrono::nanoseconds
+  total_time() const
+  {
+    return STLC::chrono::to_nanoseconds(
+        hours + minutes + seconds + milliseconds + microseconds + nanoseconds);
+  }
+
   std::chrono::hours hours{};
   std::chrono::minutes minutes{};
 
@@ -21,23 +48,77 @@ struct Time
   std::chrono::nanoseconds nanoseconds{};
 };
 
-enum class TimeDisplayPercision
+enum class TimePercision
 {
   minutes,
   seconds,
+
   milliseconds,
   microseconds,
+
   nanoseconds
 };
 
 class TimePoint
 {
 public:
-  TimePoint(const Time& time = {})
-    : m_time_since_midnight{STLC::chrono::to_nanoseconds(
-          time.hours + time.minutes + time.seconds + time.milliseconds +
-          time.microseconds + time.nanoseconds)}
+  explicit TimePoint(const TimeComponent& time = {})
+    : m_time_since_midnight{time.total_time()}
+    , m_display_percision{deduce_time_display_percision(time)}
   {
+  }
+
+  explicit TimePoint(const TimeComponent& time, const TimePercision percision)
+    : m_time_since_midnight{time.total_time()}
+    , m_display_percision{percision}
+  {
+  }
+
+  TimePoint&
+  set_time(const TimeComponent& time)
+  {
+    m_time_since_midnight = time.total_time();
+    return *this;
+  }
+
+  TimePoint&
+  set_percision(TimePercision percision)
+  {
+    m_display_percision = percision;
+    return *this;
+  }
+
+  TimePercision
+  percision() const
+  {
+    return m_display_percision;
+  }
+
+  TimeComponent
+  time() const
+  {
+    return {hours(),
+            minutes(),
+            seconds(),
+            milliseconds(),
+            microseconds(),
+            nanoseconds()};
+  }
+
+  template <typename Duration>
+  TimePoint&
+  add_time(const Duration& duration)
+  {
+    m_time_since_midnight += duration;
+    return *this;
+  }
+
+  template <typename Duration>
+  TimePoint&
+  remove_time(const Duration& duration)
+  {
+    m_time_since_midnight -= duration;
+    return *this;
   }
 
   template <typename ReturnDuration>
@@ -89,8 +170,7 @@ public:
   }
 
   std::string
-  to_string(const TimeDisplayPercision percision =
-                TimeDisplayPercision::minutes) const
+  to_string() const
   {
     std::string ret{};
     ret.append(std::to_string(hours().count())).push_back(':');
@@ -102,7 +182,7 @@ public:
     }
     ret.append(std::to_string(min));
 
-    if (percision != TimeDisplayPercision::minutes)
+    if (m_display_percision != TimePercision::minutes)
     {
       ret.push_back(':');
       auto sec{seconds().count()};
@@ -112,7 +192,7 @@ public:
       }
       ret.append(std::to_string(sec)).push_back('.');
 
-      if (percision != TimeDisplayPercision::seconds)
+      if (m_display_percision != TimePercision::seconds)
       {
         auto millisec{milliseconds().count()};
         if (millisec)
@@ -125,7 +205,7 @@ public:
           ret.append("000");
         }
 
-        if (percision != TimeDisplayPercision::milliseconds)
+        if (m_display_percision != TimePercision::milliseconds)
         {
           auto microsec{microseconds().count()};
           if (microsec)
@@ -138,7 +218,7 @@ public:
             ret.append("000");
           }
 
-          if (percision != TimeDisplayPercision::microseconds)
+          if (m_display_percision != TimePercision::microseconds)
           {
             auto nanosec{nanoseconds().count()};
             if (nanosec)
@@ -170,18 +250,30 @@ public:
     return !(*this < rhs);
   }
 
-  template <typename Duration>
+  template <typename Rep, typename Period>
   void
-  operator+=(const Duration& rhs)
+  operator+=(const std::chrono::duration<Rep, Period>& rhs)
   {
     this->m_time_since_midnight += rhs;
   }
 
-  template <typename Duration>
+  template <typename Rep, typename Period>
   void
-  operator-=(const Duration& rhs)
+  operator-=(const std::chrono::duration<Rep, Period>& rhs)
   {
     this->m_time_since_midnight -= rhs;
+  }
+
+  void
+  operator+=(const TimePoint& rhs)
+  {
+    this->m_time_since_midnight += rhs.m_time_since_midnight;
+  }
+
+  void
+  operator-=(const TimePoint& rhs)
+  {
+    this->m_time_since_midnight -= rhs.m_time_since_midnight;
   }
 
   std::chrono::nanoseconds
@@ -197,7 +289,31 @@ public:
   }
 
 private:
+  TimePercision
+  deduce_time_display_percision(const TimeComponent& time)
+  {
+    TimePercision ret{TimePercision::minutes};
+    if (time.nanoseconds.count())
+    {
+      ret = TimePercision::nanoseconds;
+    }
+    else if (time.microseconds.count())
+    {
+      ret = TimePercision::microseconds;
+    }
+    else if (time.milliseconds.count())
+    {
+      ret = TimePercision::milliseconds;
+    }
+    else if (time.seconds.count())
+    {
+      ret = TimePercision::seconds;
+    }
+    return ret;
+  }
+
   std::chrono::nanoseconds m_time_since_midnight{};
+  TimePercision m_display_percision{};
 };
 
 struct WorkShiftInfo
@@ -212,7 +328,7 @@ struct WorkShiftInfo
 class WorkShift
 {
 public:
-  WorkShift(const WorkShiftInfo& info = {})
+  explicit WorkShift(const WorkShiftInfo& info = {})
     : m_info{info}
     , m_total_time_worked{}
   {
@@ -344,56 +460,77 @@ display_hours_worked(const WorkShift& shift)
 int
 main(int argc, char* argv[])
 {
+  io::stream::cout("Total time in a day:\n",
+                   "Hours: ",
+                   Day::hours.count(),
+                   "\nMinutes: ",
+                   Day::minutes.count(),
+                   "\nSeconds: ",
+                   Day::seconds.count(),
+                   "\nMilliseconds: ",
+                   Day::milliseconds.count(),
+                   "\nMicroseconds: ",
+                   Day::microseconds.count(),
+                   "\nNanoseconds: ",
+                   Day::nanoseconds.count(),
+                   '\n');
+
   io::stream::cout("TimePoint test: ",
-                   TimePoint{Time{15h, 22min, 55s, 15ms, 5us, 20ns}}.to_string(
-                       TimeDisplayPercision::nanoseconds),
+                   TimePoint{TimeComponent{15h, 22min, 55s, 15ms, 5us, 20ns}}
+                       .remove_time(1ns)
+                       .to_string(),
                    "\n\n");
 
-  display_hours_worked(
-      {{"Overnight test", {19.0}, Time{15h}, Time{3h, 30min}}});
+  display_hours_worked(WorkShift{{"Overnight test",
+                                  {19.0},
+                                  TimePoint{TimeComponent{15h}},
+                                  TimePoint{TimeComponent{3h, 30min}}}});
   std::chrono::seconds total_time_worked{};
-  WorkShift shift{{"06/28/26", {19.0}, Time{9h}, Time{18h, 45min}}};
+  WorkShift shift{{"06/28/26",
+                   {19.0},
+                   TimePoint{TimeComponent{9h}},
+                   TimePoint{TimeComponent{18h, 45min}}}};
 
   display_hours_worked(shift);
   total_time_worked += shift.total_time_worked<std::chrono::seconds>();
 
-  shift.set_clock_in_time(Time{9h});
-  shift.set_clock_out_time(Time{18h, 30min});
+  shift.set_clock_in_time(TimePoint{TimeComponent{9h}});
+  shift.set_clock_out_time(TimePoint{TimeComponent{18h, 30min}});
 
   shift.set_shift_date("06/29/26");
   display_hours_worked(shift);
   total_time_worked += shift.total_time_worked<std::chrono::seconds>();
 
-  shift.set_clock_in_time(Time{12h});
-  shift.set_clock_out_time(Time{17h});
+  shift.set_clock_in_time(TimePoint{TimeComponent{12h}});
+  shift.set_clock_out_time(TimePoint{TimeComponent{17h}});
 
   shift.set_shift_date("06/30/26");
   display_hours_worked(shift);
   total_time_worked += shift.total_time_worked<std::chrono::seconds>();
 
-  shift.set_clock_in_time(Time{9h, 45min});
-  shift.set_clock_out_time(Time{18h});
+  shift.set_clock_in_time(TimePoint{TimeComponent{9h, 45min}});
+  shift.set_clock_out_time(TimePoint{TimeComponent{18h}});
 
   shift.set_shift_date("07/01/26");
   display_hours_worked(shift);
   total_time_worked += shift.total_time_worked<std::chrono::seconds>();
 
-  shift.set_clock_in_time(Time{10h, 15min});
-  shift.set_clock_out_time(Time{19h, 45min});
+  shift.set_clock_in_time(TimePoint{TimeComponent{10h, 15min}});
+  shift.set_clock_out_time(TimePoint{TimeComponent{19h, 45min}});
 
   shift.set_shift_date("07/03/26");
   display_hours_worked(shift);
   total_time_worked += shift.total_time_worked<std::chrono::seconds>();
 
-  shift.set_clock_in_time(Time{9h});
-  shift.set_clock_out_time(Time{14h, 30min});
+  shift.set_clock_in_time(TimePoint{TimeComponent{9h}});
+  shift.set_clock_out_time(TimePoint{TimeComponent{14h, 30min}});
 
   shift.set_shift_date("07/04/26");
   display_hours_worked(shift);
   total_time_worked += shift.total_time_worked<std::chrono::seconds>();
 
-  shift.set_clock_in_time(Time{9h});
-  shift.set_clock_out_time(Time{15h});
+  shift.set_clock_in_time(TimePoint{TimeComponent{9h}});
+  shift.set_clock_out_time(TimePoint{TimeComponent{15h}});
 
   shift.set_shift_date("07/05/26");
   display_hours_worked(shift);
