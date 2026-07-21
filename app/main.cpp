@@ -1,32 +1,16 @@
 #include <io/io.hpp>
 
+//3rd party
 #include <STLConvenience/chrono.hpp>
+//STL
+#include <cmath>
+
 using namespace std::chrono_literals;
 
 struct PayRate
 {
   double_t payrate{};
   double_t overtime_multiplier{1.5};
-};
-
-struct Day
-{
-  static constexpr std::chrono::hours hours{STLC::chrono::make_hours(24)};
-
-  static constexpr std::chrono::minutes minutes{
-      STLC::chrono::to_minutes(hours)};
-
-  static constexpr std::chrono::seconds seconds{
-      STLC::chrono::to_seconds(minutes)};
-
-  static constexpr std::chrono::milliseconds milliseconds{
-      STLC::chrono::to_milliseconds(seconds)};
-
-  static constexpr std::chrono::microseconds microseconds{
-      STLC::chrono::to_microseconds(milliseconds)};
-
-  static constexpr std::chrono::nanoseconds nanoseconds{
-      STLC::chrono::to_nanoseconds(microseconds)};
 };
 
 struct TimeComponent
@@ -436,8 +420,8 @@ display_hours_worked(const WorkShift& shift)
                    hours,
                    "h");
 
-  auto minutes{shift.minutes().count()};
-  auto time_worked_decimal{hours + (minutes / 60.0)};
+  double_t minutes{static_cast<double_t>(shift.minutes().count())};
+  double_t time_worked_decimal{static_cast<double_t>(hours) + (minutes / 60.0)};
 
   //Do not display '0min'
   if (minutes > 0)
@@ -460,34 +444,15 @@ display_hours_worked(const WorkShift& shift)
 int
 main(int argc, char* argv[])
 {
-  io::stream::cout("Total time in a day:\n",
-                   "Hours: ",
-                   Day::hours.count(),
-                   "\nMinutes: ",
-                   Day::minutes.count(),
-                   "\nSeconds: ",
-                   Day::seconds.count(),
-                   "\nMilliseconds: ",
-                   Day::milliseconds.count(),
-                   "\nMicroseconds: ",
-                   Day::microseconds.count(),
-                   "\nNanoseconds: ",
-                   Day::nanoseconds.count(),
-                   '\n');
-
   io::stream::cout("TimePoint test: ",
                    TimePoint{TimeComponent{15h, 22min, 55s, 15ms, 5us, 20ns}}
                        .remove_time(1ns)
                        .to_string(),
                    "\n\n");
 
-  display_hours_worked(WorkShift{{"Overnight test",
-                                  {19.0},
-                                  TimePoint{TimeComponent{15h}},
-                                  TimePoint{TimeComponent{3h, 30min}}}});
   std::chrono::seconds total_time_worked{};
   WorkShift shift{{"06/28/26",
-                   {19.0},
+                   {20.5},
                    TimePoint{TimeComponent{9h}},
                    TimePoint{TimeComponent{18h, 45min}}}};
 
@@ -555,12 +520,15 @@ main(int argc, char* argv[])
     {
       io::stream::cout(total_minutes,
                        "min or ",
-                       total_hours + (total_minutes / 60.0),
+                       static_cast<double_t>(total_hours) +
+                           (static_cast<double_t>(total_minutes) / 60.0),
                        " hours");
     }
 
     double_t total_base_pay{shift.pay_rate().payrate * 40};
-    double_t overtime_hours{(total_hours + (total_minutes / 60.0)) - 40};
+    double_t overtime_hours{(static_cast<double_t>(total_hours) +
+                             (static_cast<double_t>(total_minutes) / 60.0)) -
+                            40.0};
     double_t total_overtime_pay{
         (shift.pay_rate().payrate * shift.pay_rate().overtime_multiplier) *
         overtime_hours};
