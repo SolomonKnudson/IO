@@ -1,6 +1,6 @@
 #ifndef IO_STREAM_HPP
 #define IO_STREAM_HPP
-#include <io/internal/impl/stream.hpp>
+#include <io/internal/impl/iostream.hpp>
 
 namespace io
 {
