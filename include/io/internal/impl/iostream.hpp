@@ -16,7 +16,7 @@ template <> struct Operator::Impl<io::internal::impl::iostream>
       OPERATOR_CREATE_TRAILING_RETURN(
           decltype(in_stream >> util::deref(std::forward<LValue>(l_value))))
   {
-    in_stream >> util::deref(std::forward<LValue>(l_value));
+    in_stream >> Operator::util::deref(std::forward<LValue>(l_value));
     return in_stream;
   }
 
