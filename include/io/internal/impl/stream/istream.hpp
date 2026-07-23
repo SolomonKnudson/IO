@@ -16,7 +16,7 @@ template <> struct Operator::Impl<io::tags::stream::cin>
   invoke(LValue&& l_value)
   {
     return Impl<io::internal::impl::ios_base>::invoke(
-        std::forward<LValue>(l_value));
+        io::tags::stream::cin::stream(), std::forward<LValue>(l_value));
   }
 };
 
@@ -27,7 +27,7 @@ template <> struct Operator::Impl<io::tags::stream::wcin>
   invoke(LValue&& l_value)
   {
     return Impl<io::internal::impl::ios_base>::invoke(
-        std::forward<LValue>(l_value));
+        io::tags::stream::wcin::stream(), std::forward<LValue>(l_value));
   }
 };
 

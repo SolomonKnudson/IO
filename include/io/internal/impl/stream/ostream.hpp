@@ -2,9 +2,6 @@
 #define IO_INTERNAL_OSTREAM_IMPL_HPP
 #include <io/internal/impl/stream/ios_base.hpp>
 #include <io/tags.hpp>
-// 3rd Party
-// STL
-#include <iostream>
 
 template <> struct Operator::Impl<io::tags::stream::cout>
 {
@@ -13,7 +10,7 @@ template <> struct Operator::Impl<io::tags::stream::cout>
   invoke(Args&&... args)
   {
     return Impl<io::internal::impl::ios_base>::invoke(
-        std::cout, std::forward<Args>(args)...);
+        io::tags::stream::cout::stream(), std::forward<Args>(args)...);
   }
 };
 
@@ -24,7 +21,7 @@ template <> struct Operator::Impl<io::tags::stream::wcout>
   invoke(Args&&... args)
   {
     return Impl<io::internal::impl::ios_base>::invoke(
-        std::wcout, std::forward<Args>(args)...);
+        io::tags::stream::wcout::stream(), std::forward<Args>(args)...);
   }
 };
 
@@ -35,7 +32,7 @@ template <> struct Operator::Impl<io::tags::stream::cerr>
   invoke(Args&&... args)
   {
     return Impl<io::internal::impl::ios_base>::invoke(
-        std::cerr, std::forward<Args>(args)...);
+        io::tags::stream::cerr::stream(), std::forward<Args>(args)...);
   }
 };
 
@@ -46,7 +43,7 @@ template <> struct Operator::Impl<io::tags::stream::wcerr>
   invoke(Args&&... args)
   {
     return Impl<io::internal::impl::ios_base>::invoke(
-        std::wcerr, std::forward<Args>(args)...);
+        io::tags::stream::wcerr::stream(), std::forward<Args>(args)...);
   }
 };
 
@@ -57,7 +54,7 @@ template <> struct Operator::Impl<io::tags::stream::clog>
   invoke(Args&&... args)
   {
     return Impl<io::internal::impl::ios_base>::invoke(
-        std::clog, std::forward<Args>(args)...);
+        io::tags::stream::clog::stream(), std::forward<Args>(args)...);
   }
 };
 
@@ -68,7 +65,7 @@ template <> struct Operator::Impl<io::tags::stream::wclog>
   invoke(Args&&... args)
   {
     return Impl<io::internal::impl::ios_base>::invoke(
-        std::wclog, std::forward<Args>(args)...);
+        io::tags::stream::wclog::stream(), std::forward<Args>(args)...);
   }
 };
 #endif // IO_INTERNAL_OSTREAM_IMPL_HPP
