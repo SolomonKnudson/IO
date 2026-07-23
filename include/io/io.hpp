@@ -3,4 +3,5 @@
 #include <io/file.hpp>
 #include <io/iostream.hpp>
 #include <io/socket.hpp>
+#include <io/tags.hpp>
 #endif // IO_HPP
