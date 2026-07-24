@@ -1,9 +1,9 @@
 #ifndef IO_IMPL_TAGS_HPP
 #define IO_IMPL_TAGS_HPP
 //3rd party
-#include <operator/operator.hpp>
+#include <iostream>
 
-namespace io::tags
+namespace io
 {
   namespace stream
   {
@@ -27,25 +27,25 @@ namespace io::tags
       static constexpr bool is_writable{Writable};
     };
 
-    using cin = stream_tag<std::istream, std::streambuf, std::cin, true, false>;
-    using wcin =
+    using Cin = stream_tag<std::istream, std::streambuf, std::cin, true, false>;
+    using WCin =
         stream_tag<std::wistream, std::wstreambuf, std::wcin, true, false>;
 
-    using cout =
+    using Cout =
         stream_tag<std::ostream, std::streambuf, std::cout, false, true>;
-    using wcout =
+    using WCout =
         stream_tag<std::wostream, std::wstreambuf, std::wcout, false, true>;
 
-    using cerr =
+    using Cerr =
         stream_tag<std::ostream, std::streambuf, std::cerr, false, true>;
-    using wcerr =
+    using WCerr =
         stream_tag<std::wostream, std::wstreambuf, std::wcerr, false, true>;
 
-    using clog =
+    using Clog =
         stream_tag<std::ostream, std::streambuf, std::clog, false, true>;
-    using wclog =
+    using WClog =
         stream_tag<std::wostream, std::wstreambuf, std::wclog, false, true>;
   } // namespace stream
-} // namespace io::tags
+} // namespace io
 #endif // IO_IMPL_TAGS_HPP
 

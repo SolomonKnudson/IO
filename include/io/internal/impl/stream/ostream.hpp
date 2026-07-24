@@ -3,69 +3,69 @@
 #include <io/internal/impl/stream/ios_base.hpp>
 #include <io/tags.hpp>
 
-template <> struct Operator::Impl<io::tags::stream::cout>
+template <> struct Operator::Impl<io::stream::Cout>
 {
   template <typename... Args>
   static decltype(auto)
   invoke(Args&&... args)
   {
     return Impl<io::internal::impl::ios_base>::invoke(
-        io::tags::stream::cout::stream(), std::forward<Args>(args)...);
+        io::stream::Cout::stream(), std::forward<Args>(args)...);
   }
 };
 
-template <> struct Operator::Impl<io::tags::stream::wcout>
+template <> struct Operator::Impl<io::stream::WCout>
 {
   template <typename... Args>
   static decltype(auto)
   invoke(Args&&... args)
   {
     return Impl<io::internal::impl::ios_base>::invoke(
-        io::tags::stream::wcout::stream(), std::forward<Args>(args)...);
+        io::stream::WCout::stream(), std::forward<Args>(args)...);
   }
 };
 
-template <> struct Operator::Impl<io::tags::stream::cerr>
+template <> struct Operator::Impl<io::stream::Cerr>
 {
   template <typename... Args>
   static decltype(auto)
   invoke(Args&&... args)
   {
     return Impl<io::internal::impl::ios_base>::invoke(
-        io::tags::stream::cerr::stream(), std::forward<Args>(args)...);
+        io::stream::Cerr::stream(), std::forward<Args>(args)...);
   }
 };
 
-template <> struct Operator::Impl<io::tags::stream::wcerr>
+template <> struct Operator::Impl<io::stream::WCerr>
 {
   template <typename... Args>
   static decltype(auto)
   invoke(Args&&... args)
   {
     return Impl<io::internal::impl::ios_base>::invoke(
-        io::tags::stream::wcerr::stream(), std::forward<Args>(args)...);
+        io::stream::WCerr::stream(), std::forward<Args>(args)...);
   }
 };
 
-template <> struct Operator::Impl<io::tags::stream::clog>
+template <> struct Operator::Impl<io::stream::Clog>
 {
   template <typename... Args>
   static decltype(auto)
   invoke(Args&&... args)
   {
     return Impl<io::internal::impl::ios_base>::invoke(
-        io::tags::stream::clog::stream(), std::forward<Args>(args)...);
+        io::stream::Clog::stream(), std::forward<Args>(args)...);
   }
 };
 
-template <> struct Operator::Impl<io::tags::stream::wclog>
+template <> struct Operator::Impl<io::stream::WClog>
 {
   template <typename... Args>
   static decltype(auto)
   invoke(Args&&... args)
   {
     return Impl<io::internal::impl::ios_base>::invoke(
-        io::tags::stream::wclog::stream(), std::forward<Args>(args)...);
+        io::stream::WClog::stream(), std::forward<Args>(args)...);
   }
 };
 

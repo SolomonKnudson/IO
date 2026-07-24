@@ -3,31 +3,26 @@
 #include <io/internal/impl/stream/ios_base.hpp>
 #include <io/tags.hpp>
 
-// 3rd Party
-// STL
-#include <STLConvenience/type_traits.hpp>
-#include <iostream>
-
 // Formatted input
-template <> struct Operator::Impl<io::tags::stream::cin>
+template <> struct Operator::Impl<io::stream::Cin>
 {
   template <typename LValue>
   static decltype(auto)
   invoke(LValue&& l_value)
   {
     return Impl<io::internal::impl::ios_base>::invoke(
-        io::tags::stream::cin::stream(), std::forward<LValue>(l_value));
+        io::stream::Cin::stream(), std::forward<LValue>(l_value));
   }
 };
 
-template <> struct Operator::Impl<io::tags::stream::wcin>
+template <> struct Operator::Impl<io::stream::WCin>
 {
   template <typename LValue>
   static decltype(auto)
   invoke(LValue&& l_value)
   {
     return Impl<io::internal::impl::ios_base>::invoke(
-        io::tags::stream::wcin::stream(), std::forward<LValue>(l_value));
+        io::stream::WCin::stream(), std::forward<LValue>(l_value));
   }
 };
 

@@ -1,6 +1,7 @@
 #ifndef IO_ISTREAM_HPP
 #define IO_ISTREAM_HPP
 #include <io/internal/impl/stream/istream.hpp>
+#include <io/ios_base.hpp>
 #include <io/tags.hpp>
 
 namespace io
@@ -19,11 +20,11 @@ namespace io
     decltype(auto)
     wcin(LValue&& l_value)
     {
-      return Operator::operation<stream::wcin>(std::forward<LValue>(l_value));
+      return Operator::operation<stream::WCin>(std::forward<LValue>(l_value));
     }
 
     // Unformatted input
-    template <typename IStreamTag = tags::stream::cin, typename... Args>
+    template <typename IStreamTag = stream::Cin, typename... Args>
     decltype(auto)
     get(Args&&... args)
     {
@@ -34,7 +35,7 @@ namespace io
           std::forward<Args>(args)...);
     }
 
-    template <typename IStreamTag = tags::stream::cin>
+    template <typename IStreamTag = stream::Cin>
     decltype(auto)
     peek()
     {
@@ -44,7 +45,7 @@ namespace io
       return Operator::operation<internal::impl::peek, IStreamTag>();
     }
 
-    template <typename IStreamTag = tags::stream::cin>
+    template <typename IStreamTag = stream::Cin>
     decltype(auto)
     unget()
     {
@@ -54,7 +55,7 @@ namespace io
       return Operator::operation<internal::impl::unget, IStreamTag>();
     }
 
-    template <typename IStreamTag = tags::stream::cin>
+    template <typename IStreamTag = stream::Cin>
     decltype(auto)
     putback(typename IStreamTag::stream_type::char_type ch)
     {
@@ -64,7 +65,7 @@ namespace io
       return Operator::operation<internal::impl::putback, IStreamTag>(ch);
     }
 
-    template <typename IStreamTag = tags::stream::cin, typename... Args>
+    template <typename IStreamTag = stream::Cin, typename... Args>
     decltype(auto)
     getline(Args&&... args)
     {
@@ -75,7 +76,7 @@ namespace io
           std::forward<Args>(args)...);
     }
 
-    template <typename IStreamTag = tags::stream::cin, typename... Args>
+    template <typename IStreamTag = stream::Cin, typename... Args>
     decltype(auto)
     ignore(Args&&... args)
     {
@@ -86,7 +87,7 @@ namespace io
           std::forward<Args>(args)...);
     }
 
-    template <typename IStreamTag = tags::stream::cin>
+    template <typename IStreamTag = stream::Cin>
     decltype(auto)
     read(typename IStreamTag::stream_type::char_type* ch,
          const std::streamsize count)
@@ -98,7 +99,7 @@ namespace io
       return Operator::operation<internal::impl::read, IStreamTag>(ch, count);
     }
 
-    template <typename IStreamTag = tags::stream::cin>
+    template <typename IStreamTag = stream::Cin>
     decltype(auto)
     readsome(typename IStreamTag::stream_type::char_type* ch,
              const std::streamsize count)
@@ -112,7 +113,7 @@ namespace io
                                                                        count);
     }
 
-    template <typename IStreamTag = tags::stream::cin>
+    template <typename IStreamTag = stream::Cin>
     decltype(auto)
     gcount()
     {
@@ -124,7 +125,7 @@ namespace io
     }
 
     // Positioning
-    template <typename IStreamTag = tags::stream::cin>
+    template <typename IStreamTag = stream::Cin>
     decltype(auto)
     tellg()
     {
@@ -135,7 +136,7 @@ namespace io
       return Operator::operation<internal::impl::tellg, IStreamTag>();
     }
 
-    template <typename IStreamTag = tags::stream::cin, typename... Args>
+    template <typename IStreamTag = stream::Cin, typename... Args>
     decltype(auto)
     seekg(Args&&... args)
     {
@@ -148,7 +149,7 @@ namespace io
     }
 
     // Miscellaneous
-    template <typename IStreamTag = tags::stream::cin>
+    template <typename IStreamTag = stream::Cin>
     decltype(auto)
     sync()
     {
