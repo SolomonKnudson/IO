@@ -50,7 +50,8 @@ template <> struct Operator::Impl<io::internal::impl::get>
 
   template <typename IStreamTag>
   static decltype(auto)
-  invoke(typename IStreamTag::stream_type::char_type* ch, std::streamsize count)
+  invoke(typename IStreamTag::stream_type::char_type* ch,
+         const std::streamsize count)
   {
     return IStreamTag::stream().get(ch, count);
   }
@@ -104,7 +105,7 @@ template <> struct Operator::Impl<io::internal::impl::putback>
 {
   template <typename IStreamTag>
   static decltype(auto)
-  invoke(typename IStreamTag::stream_type::char_type ch)
+  invoke(const typename IStreamTag::stream_type::char_type ch)
   {
     return IStreamTag::stream().putback(ch);
   }
@@ -134,8 +135,8 @@ template <> struct Operator::Impl<io::internal::impl::ignore>
 {
   template <typename IStreamTag>
   static decltype(auto)
-  invoke(std::streamsize count = 1,
-         typename IStreamTag::stream_type::int_type delim =
+  invoke(const std::streamsize count = 1,
+         const typename IStreamTag::stream_type::int_type delim =
              typename IStreamTag::stream_type::traits_type::eof())
   {
     return IStreamTag::stream().ignore(count, delim);
@@ -185,9 +186,42 @@ template <> struct Operator::Impl<io::internal::impl::gcount>
 // TODO: implement tellg(),seekg(), sync()
 
 // Positioning
-// tellg()
-// seekg()
+template <> struct Operator::Impl<io::internal::impl::tellg>
+{
+  template <typename IStreamTag>
+  static typename IStreamTag::stream_type::pos_type
+  invoke()
+  {
+    return IStreamTag::stream().tellg();
+  }
+};
+
+template <> struct Operator::Impl<io::internal::impl::seekg>
+{
+  template <typename IStreamTag>
+  static decltype(auto)
+  invoke(const typename IStreamTag::stream_type::pos_type pos)
+  {
+    return IStreamTag::stream().seekg(pos);
+  }
+
+  template <typename IStreamTag>
+  static decltype(auto)
+  invoke(const typename IStreamTag::stream_type::off_type off,
+         std::ios_base::seekdir& dir)
+  {
+    return IStreamTag::stream().seekg(off, dir);
+  }
+};
 
 // Miscellaneous
-// sync()
+template <> struct Operator::Impl<io::internal::impl::sync>
+{
+  template <typename IStreamTag>
+  static typename IStreamTag::stream_type::pos_type
+  invoke()
+  {
+    return IStreamTag::stream().sync();
+  }
+};
 #endif // IO_INTERNAL_ISTREAM_IMPL_HPP

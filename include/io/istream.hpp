@@ -123,14 +123,41 @@ namespace io
       return Operator::operation<internal::impl::gcount, IStreamTag>();
     }
 
-    // TODO: implement tellg(),seekg(), sync()
-
     // Positioning
-    // tellg()
-    // seekg()
+    template <typename IStreamTag = tags::stream::cin>
+    decltype(auto)
+    tellg()
+    {
+      static_assert(IStreamTag::is_readable,
+                    "io::stream::tellg(): stream must "
+                    "be readable!");
+
+      return Operator::operation<internal::impl::tellg, IStreamTag>();
+    }
+
+    template <typename IStreamTag = tags::stream::cin, typename... Args>
+    decltype(auto)
+    seekg(Args&&... args)
+    {
+      static_assert(IStreamTag::is_readable,
+                    "io::stream::seekg(): stream must "
+                    "be readable!");
+
+      return Operator::operation<internal::impl::seekg, IStreamTag>(
+          std::forward<Args>(args)...);
+    }
 
     // Miscellaneous
-    // sync()
+    template <typename IStreamTag = tags::stream::cin>
+    decltype(auto)
+    sync()
+    {
+      static_assert(IStreamTag::is_readable,
+                    "io::stream::seekg(): stream must "
+                    "be readable!");
+
+      return Operator::operation<internal::impl::sync, IStreamTag>();
+    }
   } // namespace stream
 }; // namespace io
 #endif // IO_ISTREAM_HPP
